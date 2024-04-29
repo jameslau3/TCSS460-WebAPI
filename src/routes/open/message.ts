@@ -219,9 +219,22 @@ messageRouter.get('/helloworld', (request: Request, response: Response) => {
 
 
 messageRouter.get('/books/all', (request: Request, response: Response) => {
-    response.send({
-        message: 'Hello, World!',
-    });
+    const theQuery = 'SELECT * FROM books';
+
+    pool.query(theQuery)
+        .then((result) => {
+            response.send({
+                entries: result.rows
+            });
+        })
+        .catch((error) => {
+            //log the error
+            console.error('DB Query error on GET all');
+            console.error(error);
+            response.status(500).send({
+                message: 'server error - contact support',
+            });
+        });
 });
 
 /**
