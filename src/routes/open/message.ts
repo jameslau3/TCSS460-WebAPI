@@ -232,50 +232,50 @@ messageRouter.get('/helloworld', (request: Request, response: Response) => {
 // SELECT Title FROM Books WHERE Author $1
 // SELECT Title FROM Books WHERE $1 = avg_rat (sort by rating?)
 // Release date by YEAR: SELECT Title FROM Books WHERE Date == __
-messageRouter.get('/books/all', (request: Request, response: Response) => {
-    const theQuery = 'SELECT title FROM books';
+// messageRouter.get('/books/all', (request: Request, response: Response) => {
+//     const theQuery = 'SELECT title FROM books';
 
-    pool.query(theQuery)
-        .then((result) => {
-            response.send({
-                entries: result.rows,
-            });
-        })
-        .catch((error) => {
-            //log the error
-            console.error('DB Query error on GET all');
-            console.error(error);
-            response.status(500).send({
-                message: 'server error - contact support',
-            });
-        });
-});
+//     pool.query(theQuery)
+//         .then((result) => {
+//             response.send({
+//                 entries: result.rows,
+//             });
+//         })
+//         .catch((error) => {
+//             //log the error
+//             console.error('DB Query error on GET all');
+//             console.error(error);
+//             response.status(500).send({
+//                 message: 'server error - contact support',
+//             });
+//         });
+// });
 
-messageRouter.get(
-    '/books/pagination',
-    async (request: Request, response: Response) => {
-        const { page, limit } = request.query;
+// messageRouter.get(
+//     '/books/pagination',
+//     async (request: Request, response: Response) => {
+//         const { page, limit } = request.query;
 
-        const offset = (page - 1) * limit;
+//         const offset = (page - 1) * limit;
 
-        const theQuery = 'SELECT title FROM books LIMIT $1 OFFSET ';
+//         const theQuery = 'SELECT title FROM books LIMIT $1 OFFSET ';
 
-        pool.query(theQuery)
-            .then((result) => {
-                response.send({
-                    entries: result.rows,
-                });
-            })
-            .catch((error) => {
-                //log the error
-                console.error('DB Query error on GET all');
-                console.error(error);
-                response.status(500).send({
-                    message: 'server error - contact support',
-                });
-            });
-    }
-);
+//         pool.query(theQuery)
+//             .then((result) => {
+//                 response.send({
+//                     entries: result.rows,
+//                 });
+//             })
+//             .catch((error) => {
+//                 //log the error
+//                 console.error('DB Query error on GET all');
+//                 console.error(error);
+//                 response.status(500).send({
+//                     message: 'server error - contact support',
+//                 });
+//             });
+//     }
+// );
 
 /**
  * @api {get} /message/:name Request to retrieve an entry
