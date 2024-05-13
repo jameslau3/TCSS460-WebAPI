@@ -263,7 +263,7 @@ messageRouter.get('/helloworld', (request: Request, response: Response) => {
 //         pool.query(theQuery)
 //             .then((result) => {
 //                 response.send({
-//                     entries: result.rows,
+//                     entries: result.rows,,
 //                 });
 //             })
 //             .catch((error) => {
