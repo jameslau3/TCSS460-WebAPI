@@ -37,14 +37,26 @@ booksRouter.get('/all', (request: Request, response: Response) => {
 });
 
 booksRouter.get('/title/:title', (request: Request, response: Response) => {
+    const page = parseInt(request.query.page as string, 10) || 1;
+    const limit = parseInt(request.query.limit as string, 10) || 10;
+    const offset = (page - 1) * limit;
     const theQuery =
-        'SELECT title, authors, publication_year FROM books WHERE title ILIKE $1';
-    const values = ['%' + request.params.title + '%'];
+        'SELECT title, authors, publication_year FROM books WHERE title ILIKE $1 LIMIT $2 OFFSET $3';
+    const countQuery = 'SELECT COUNT(*) FROM books';
+    const values = ['%' + request.params.title + '%', limit, offset];
     pool.query(theQuery, values)
-        .then((result) => {
+        .then(async (result) => {
+            const countBooks = await pool.query(countQuery);
+            const totalBooks = parseInt(countBooks.rows[0].count, 10);
+            const totalPage = Math.ceil(totalBooks / limit);
             if (result.rowCount > 0) {
                 response.send({
                     entries: result.rows,
+                    pagination: {
+                        page: page,
+                        limit: limit,
+                        totalPages: totalPage,
+                    },
                 });
             } else {
                 response.status(404).send({
@@ -63,13 +75,25 @@ booksRouter.get('/title/:title', (request: Request, response: Response) => {
 });
 
 booksRouter.get('/title/', (request: Request, response: Response) => {
-    const theQuery =
-        'SELECT title, authors, publication_year FROM books ORDER BY title asc';
-    pool.query(theQuery)
-        .then((result) => {
+    const page = parseInt(request.query.page as string, 10) || 1;
+    const limit = parseInt(request.query.limit as string, 10) || 10;
+    const offset = (page - 1) * limit;
+
+    const theQuery = `SELECT title, authors, publication_year FROM books ORDER BY title asc LIMIT $1 OFFSET $2`;
+    const countQuery = 'SELECT COUNT(*) FROM books';
+    pool.query(theQuery, [limit, offset])
+        .then(async (result) => {
+            const countBooks = await pool.query(countQuery);
+            const totalBooks = parseInt(countBooks.rows[0].count, 10);
+            const totalPage = Math.ceil(totalBooks / limit);
             if (result.rowCount > 0) {
                 response.send({
                     entries: result.rows,
+                    pagination: {
+                        page: page,
+                        limit: limit,
+                        totalPages: totalPage,
+                    },
                 });
             } else {
                 response.status(404).send({
