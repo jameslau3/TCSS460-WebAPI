@@ -1,5 +1,9 @@
 -- Active: 1713770752115@@localhost@5432@postgres
 
+CREATE TABLE demo (
+    id int NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY, name VARCHAR(255), message VARCHAR(255), priority int
+);
+
 CREATE TABLE Demo (
     DemoID SERIAL PRIMARY KEY, Priority INT, Name TEXT NOT NULL UNIQUE, Message TEXT
 );
