@@ -13,8 +13,9 @@ const booksRouter: Router = express.Router();
  * @apiName GetAllBooks
  * @apiGroup Book
  *
+ *
  * @apiSuccess {String[]} entries the aggregate of all entries as the following string:
- *      "{<code>priority</code>} - [<code>name</code>] says: <code>message</code>"
+ *      ""title": <code>title</code>"
  */
 booksRouter.get('/all', async (request: Request, response: Response) => {
     const page = parseInt(request.query.page as string, 10) || 1; //default is page 1.
@@ -173,7 +174,7 @@ booksRouter.delete('/del/:id', (request: Request, response: Response) => {
  * @apiName IsbnBook
  * @apiGroup Book
  *
- * @apiParam {string} name the isbn13 to look up the book.
+ * @apiParam {number} name the isbn13 to look up the book.
  *
  * @apierror (404: Book Not Found) {string} message "Book not found"
  * @apierror {500: Server Error} {string} message "Server error - more than 1 ISBN found"
@@ -211,7 +212,29 @@ booksRouter.get('/:isbn13', (request: Request, response: Response) => {
         });
 });
 
-/*{number} priority a message priority [1-3]*/
+/**
+ * @api {put} /rating/:isbn13 Request to change and add a rating to a book.
+ *
+ * @apiDescription Request to add a rating to a book.
+ *
+ * @apiName AddBookRating
+ * @apiGroup Book
+ *
+ * @apiBody {number} priority a message priority [1-3]
+ *
+ * @apiparam {number} message a message to replace with the associated name
+ *
+ * @apiSuccess {String} entry the string
+ *      "Updated: {<code>priority</code>} - [<code>name</code>] says: <code>message</code>"
+ *
+ * @apiError (400: Wrong body) {String} message "starInserted must be a number from 1-5"
+ * @apiError (500: Missing Parameters) {String} message "Server error - more than 1 ISBN found"
+ * @apiError (404: Book not found) {String} message "Book not found"
+ *
+ * @apiSuccess {String} entries the book into a string
+ *        "title"
+ * @apiUse JSONError
+ */
 booksRouter.put(
     '/rating/:isbn13',
     async (request: Request, response: Response) => {
@@ -249,7 +272,6 @@ booksRouter.put(
                 });
             }
             const book = result.rows[0]; //get the 1 row
-            console.log(book);
             let { star1, star2, star3, star4, star5 } = book; //get all the star values from that row.
 
             if (typeof star1 == 'undefined') {
@@ -300,7 +322,9 @@ booksRouter.put(
                 ]
             );
 
-            response.send(updateResult.rows[0]);
+            response.status(200).send({
+                book: updateResult.rows[0],
+            });
         } catch (err) {
             console.error('Error updating book rating:', err);
             response.status(500).send('Internal Server Error');
