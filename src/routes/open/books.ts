@@ -164,9 +164,9 @@ booksRouter.post('/new/', (request: Request, response: Response) => {
         });
 });
 
-booksRouter.delete('/del/:id', (request: Request, response: Response) => {
-    const theQuery = 'DELETE FROM books WHERE id = $1 RETURNING *';
-    const values = [request.params.id];
+booksRouter.delete('/del/:isbn13', (request: Request, response: Response) => {
+    const theQuery = 'DELETE FROM books WHERE isbn13 = $1 RETURNING *';
+    const values = [request.params.isbn13];
 
     pool.query(theQuery, values)
         .then((result) => {
@@ -231,7 +231,7 @@ booksRouter.get('/:isbn13', (request: Request, response: Response) => {
             console.error('DB Query error on GET /:isbn');
             console.error(error);
             response.status(500).send({
-                message: 'server error - contact supports',
+                message: 'server error - contact support',
             });
         });
 });
@@ -349,6 +349,66 @@ booksRouter.put(
         }
     }
 );
+
+booksRouter.get('/all/by-author', (request: Request, response: Response) => {
+    const authorName = request.query.author;
+    if (!authorName) {
+        response.status(400).send({
+            message: 'Author name is required',
+        });
+        return;
+    }
+
+    const queryParams = [`%${authorName}%`];
+    const theQuery = 'SELECT title FROM books WHERE authors LIKE $1';
+
+    pool.query(theQuery, queryParams)
+        .then((result) => {
+            response.send({
+                entries: result.rows,
+            });
+        })
+        .catch((error) => {
+            //log the error
+            console.error('DB Query error on GET by author');
+            console.error(error);
+            response.status(500).send({
+                message: 'server error - contact support',
+            });
+        });
+});
+
+booksRouter.get('/all/by-rating', (request: Request, response: Response) => {
+    const ratingString = request.query.rating as string;
+
+    // Parse the rating string to a float
+    const rating = parseFloat(ratingString);
+
+    if (isNaN(rating) || rating < 1 || rating > 5) {
+        response.status(400).send({
+            message: 'Rating must be a number between 1 and 5',
+        });
+        return;
+    }
+
+    const queryParams = [rating];
+    const theQuery = 'SELECT title FROM books WHERE rating_avg = $1';
+
+    pool.query(theQuery, queryParams)
+        .then((result) => {
+            response.send({
+                entries: result.rows,
+            });
+        })
+        .catch((error) => {
+            //log the error
+            console.error('DB Query error on GET by rating');
+            console.error(error);
+            response.status(500).send({
+                message: 'server error - contact support',
+            });
+        });
+});
 
 // "return" the router
 export { booksRouter };
