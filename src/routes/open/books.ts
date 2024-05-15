@@ -425,6 +425,23 @@ booksRouter.put(
     }
 );
 
+/**
+ * @api {get} /book/all/:author Request to get books by a relative author name.
+ *
+ * @apiDescription Request to retrieve all books with relative author name.
+ *
+ * @apiName GetByAuthor
+ * @apiGroup Book
+ *
+ * @apiParam {String} author the author of the book
+ *
+ * @apiSuccess {string} title the title of the book
+ * @apiSuccess {int} publication_year the year the book was published
+ * @apiSuccess {string} authors the authors of the book
+ *
+ * @apiError (404: Name Not Found) {string} message "Author name not found"
+ *
+ */
 booksRouter.get('/all/by-author', (request: Request, response: Response) => {
     const authorName = request.query.author;
     if (!authorName) {
@@ -435,7 +452,7 @@ booksRouter.get('/all/by-author', (request: Request, response: Response) => {
     }
 
     const queryParams = [`%${authorName}%`];
-    const theQuery = 'SELECT title FROM books WHERE authors LIKE $1';
+    const theQuery = 'SELECT title, authors, publication_year FROM books WHERE authors LIKE $1';
 
     pool.query(theQuery, queryParams)
         .then((result) => {
@@ -453,6 +470,23 @@ booksRouter.get('/all/by-author', (request: Request, response: Response) => {
         });
 });
 
+/**
+ * @api {get} /book/all/:rating Request to get books by a relative rating.
+ *
+ * @apiDescription Request to retrieve all books with relative rating.
+ *
+ * @apiName GetByRating
+ * @apiGroup Book
+ *
+ * @apiParam {number} rating the rating of the book
+ *
+ * @apiSuccess {string} title the title of the book
+ * @apiSuccess {int} publication_year the year the book was published
+ * @apiSuccess {string} authors the authors of the book
+ *
+ * @apiError (404: Rating Not Found) {string} message "Rating not found"
+ *
+ */
 booksRouter.get('/all/by-rating', (request: Request, response: Response) => {
     const ratingString = request.query.rating as string;
 
