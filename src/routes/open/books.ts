@@ -105,28 +105,16 @@ booksRouter.get('/title/:title', (request: Request, response: Response) => {
 });
 
 /**
- * @api {get} /book/SortByTitleAZ Request to get all books sorting by Alphabetical order.
+ * @api {get} /book/SortAZ Request to get all books sorting by Alphabetical order.
  *
  * @apiDescription Request to retrieve all books sorted in Alphabetical order.
  *
  * @apiName SortByTitleAZ
  * @apiGroup Book
  *
- * @apiSuccess {int} id the id given to the book when added to the database
- * @apiSuccess {string} isbn13 the ISBN13 of the book
- * @apiSuccess {string} authors the authors of the book
- * @apiSuccess {int} publication_year the year the book was published
- * @apiSuccess {string} original_title the original title of the book
  * @apiSuccess {string} title the title of the book
- * @apiSuccess {double} rating_avg the average rating of the book
- * @apiSuccess {int} rating_count the number of ratings the book has
- * @apiSuccess {int} rating_1 the number of 1 star ratings the book has
- * @apiSuccess {int} rating_2 the number of 2 star ratings the book has
- * @apiSuccess {int} rating_3 the number of 3 star ratings the book has
- * @apiSuccess {int} rating_4 the number of 4 star ratings the book has
- * @apiSuccess {int} rating_5 the number of 5 star ratings the book has
- * @apiSuccess {string} image_url the image of the book
- * @apiSuccess {string} small_image_url the small image of the book
+ * @apiSuccess {int} publication_year the year the book was published
+ * @apiSuccess {string} authors the authors of the book
  *
  */
 booksRouter.get('/SortAZ/', (request: Request, response: Response) => {
@@ -167,7 +155,7 @@ booksRouter.get('/SortAZ/', (request: Request, response: Response) => {
 });
 
 /**
- * @api {post} /book/CreateBook Create a new book info entry.
+ * @api {post} /book/new/ Create a new book info entry.
  *
  * @apiDescription Request to create a new book with all necessary information.
  *
