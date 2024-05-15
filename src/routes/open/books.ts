@@ -13,7 +13,6 @@ const booksRouter: Router = express.Router();
  * @apiName GetAllBooks
  * @apiGroup Book
  *
- *
  * @apiSuccess {String[]} entries the aggregate of all entries as the following string:
  *      ""title": <code>title</code>"
  */
@@ -193,7 +192,7 @@ booksRouter.delete('/del/:id', (request: Request, response: Response) => {
 /**
  * @api {get} /:isbn13 Request to retrieve book of stated isbn13.
  *
- * @apiDescription Request to retrievce book based on stated isbn13.
+ * @apiDescription Request to retrieve book based on stated isbn13.
  *
  * @apiName IsbnBook
  * @apiGroup Book
@@ -203,10 +202,10 @@ booksRouter.delete('/del/:id', (request: Request, response: Response) => {
  * @apierror (404: Book Not Found) {string} message "Book not found"
  * @apierror {500: Server Error} {string} message "Server error - more than 1 ISBN found"
  * @apiSuccess {String[]} entries the aggregate of all entries as the following string:
- *      "{<code>priority</code>} - [<code>name</code>] says: <code>message</code>"
+ *      ""title": <code>message</code>"
  */
 booksRouter.get('/:isbn13', (request: Request, response: Response) => {
-    const theQuery = 'SELECT title, rating_avg FROM books WHERE isbn13 = $1';
+    const theQuery = 'SELECT title FROM books WHERE isbn13 = $1';
     const values = [request.params.isbn13];
     // console.log(values);
 
@@ -257,7 +256,6 @@ booksRouter.get('/:isbn13', (request: Request, response: Response) => {
  *
  * @apiSuccess {String} entries the book into a string
  *        "title"
- * @apiUse JSONError
  */
 booksRouter.put(
     '/rating/:isbn13',
