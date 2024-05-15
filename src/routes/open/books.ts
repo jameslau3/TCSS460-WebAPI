@@ -15,6 +15,7 @@ const booksRouter: Router = express.Router();
  *
  * @apiSuccess {String[]} entries the aggregate of all entries as the following string:
  *      ""title": <code>title</code>"
+ *
  */
 booksRouter.get('/all', async (request: Request, response: Response) => {
     const page = parseInt(request.query.page as string, 10) || 1; //default is page 1.
