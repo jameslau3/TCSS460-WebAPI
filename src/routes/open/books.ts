@@ -182,9 +182,9 @@ booksRouter.delete('/del/:id', (request: Request, response: Response) => {
  *      "{<code>priority</code>} - [<code>name</code>] says: <code>message</code>"
  */
 booksRouter.get('/:isbn13', (request: Request, response: Response) => {
-    const theQuery = 'SELECT title FROM books WHERE isbn13 = $1';
+    const theQuery = 'SELECT title, rating_avg FROM books WHERE isbn13 = $1';
     const values = [request.params.isbn13];
-    console.log(values);
+    // console.log(values);
 
     pool.query(theQuery, values)
         .then((result) => {
@@ -215,14 +215,14 @@ booksRouter.get('/:isbn13', (request: Request, response: Response) => {
 /**
  * @api {put} /rating/:isbn13 Request to change and add a rating to a book.
  *
- * @apiDescription Request to add a rating to a book.
+ * @apiDescription Request to add a rating to a book and update the rating of that book.
  *
  * @apiName AddBookRating
  * @apiGroup Book
  *
- * @apiBody {number} priority a message priority [1-3]
+ * @apiBody {number} priority a rating priority [1-5]
  *
- * @apiparam {number} message a message to replace with the associated name
+ * @apiparam {number} name the isbn13 for the book we want to rate
  *
  * @apiSuccess {String} entry the string
  *      "Updated: {<code>priority</code>} - [<code>name</code>] says: <code>message</code>"
@@ -272,23 +272,18 @@ booksRouter.put(
                 });
             }
             const book = result.rows[0]; //get the 1 row
-            let { star1, star2, star3, star4, star5 } = book; //get all the star values from that row.
+            let star1 = book.rating_1_star;
+            let star2 = book.rating_2_star;
+            let star3 = book.rating_3_star;
+            let star4 = book.rating_4_star;
+            let star5 = book.rating_5_star;
+            // console.log(book);
 
-            if (typeof star1 == 'undefined') {
-                star1 = 0;
-            }
-            if (typeof star2 == 'undefined') {
-                star2 = 0;
-            }
-            if (typeof star3 == 'undefined') {
-                star3 = 0;
-            }
-            if (typeof star4 == 'undefined') {
-                star4 = 0;
-            }
-            if (typeof star5 == 'undefined') {
-                star5 = 0;
-            }
+            star1 = star1 !== null ? star1 : 0;
+            star2 = star2 !== null ? star2 : 0;
+            star3 = star3 !== null ? star3 : 0;
+            star4 = star4 !== null ? star4 : 0;
+            star5 = star5 !== null ? star5 : 0;
             // Calculate new star ratings. The star number the user choose, we'll increment it by one.
             const newStar1 = starInserted == 1 ? star1 + 1 : star1;
             const newStar2 = starInserted == 2 ? star2 + 1 : star2;
