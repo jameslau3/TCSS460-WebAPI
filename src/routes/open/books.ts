@@ -241,7 +241,7 @@ booksRouter.post('/new/', (request: Request, response: Response) => {
  */
 booksRouter.delete('/del/:isbn', (request: Request, response: Response) => {
     const theQuery = 'DELETE FROM books WHERE isbn13 = $1 RETURNING *';
-    const values = [request.params.id];
+    const values = [request.params.isbn13];
 
     pool.query(theQuery, values)
         .then((result) => {
