@@ -49,6 +49,23 @@ booksRouter.get('/all', async (request: Request, response: Response) => {
     }
 });
 
+/**
+ * @api {get} /book/:title Request to get books by relative titles.
+ *
+ * @apiDescription Request to retrieve all books with relative title.
+ *
+ * @apiName GetByTitle
+ * @apiGroup Book
+ *
+ * @apiParam {String} title the title of the book
+ *
+ * @apiSuccess {string} title the title of the book
+ * @apiSuccess {string} authors the authors of the book
+ * @apiSuccess {int} publication_year the year the book was published
+ *
+ * @apiError (404: Title Not Found) {string} message "Book title not found"
+ *
+ */
 booksRouter.get('/title/:title', (request: Request, response: Response) => {
     const page = parseInt(request.query.page as string, 10) || 1;
     const limit = parseInt(request.query.limit as string, 10) || 10;
@@ -87,7 +104,32 @@ booksRouter.get('/title/:title', (request: Request, response: Response) => {
         });
 });
 
-booksRouter.get('/title/', (request: Request, response: Response) => {
+/**
+ * @api {get} /book/SortByTitleAZ Request to get all books sorting by Alphabetical order.
+ *
+ * @apiDescription Request to retrieve all books sorted in Alphabetical order.
+ *
+ * @apiName SortByTitleAZ
+ * @apiGroup Book
+ *
+ * @apiSuccess {int} id the id given to the book when added to the database
+ * @apiSuccess {string} isbn13 the ISBN13 of the book
+ * @apiSuccess {string} authors the authors of the book
+ * @apiSuccess {int} publication_year the year the book was published
+ * @apiSuccess {string} original_title the original title of the book
+ * @apiSuccess {string} title the title of the book
+ * @apiSuccess {double} rating_avg the average rating of the book
+ * @apiSuccess {int} rating_count the number of ratings the book has
+ * @apiSuccess {int} rating_1 the number of 1 star ratings the book has
+ * @apiSuccess {int} rating_2 the number of 2 star ratings the book has
+ * @apiSuccess {int} rating_3 the number of 3 star ratings the book has
+ * @apiSuccess {int} rating_4 the number of 4 star ratings the book has
+ * @apiSuccess {int} rating_5 the number of 5 star ratings the book has
+ * @apiSuccess {string} image_url the image of the book
+ * @apiSuccess {string} small_image_url the small image of the book
+ *
+ */
+booksRouter.get('/SortAZ/', (request: Request, response: Response) => {
     const page = parseInt(request.query.page as string, 10) || 1;
     const limit = parseInt(request.query.limit as string, 10) || 10;
     const offset = (page - 1) * limit;
@@ -124,6 +166,36 @@ booksRouter.get('/title/', (request: Request, response: Response) => {
         });
 });
 
+/**
+ * @api {post} /book/CreateBook Create a new book info entry.
+ *
+ * @apiDescription Request to create a new book with all necessary information.
+ *
+ * @apiName CreateBook
+ * @apiGroup Book
+ *
+ * @apiBody {number} id The unique identifier for the book in the database
+ * @apiBody {string} isbn13 The ISBN13 of the book
+ * @apiBody {string} authors The authors of the book
+ * @apiBody {number} publication_year The year the book was published
+ * @apiBody {string} original_title The original title of the book
+ * @apiBody {string} title The title of the book
+ * @apiBody {number} rating_avg The average rating of the book
+ * @apiBody {number} rating_count The total number of ratings the book has received
+ * @apiBody {number} rating_1 The number of 1-star ratings the book has received
+ * @apiBody {number} rating_2 The number of 2-star ratings the book has received
+ * @apiBody {number} rating_3 The number of 3-star ratings the book has received
+ * @apiBody {number} rating_4 The number of 4-star ratings the book has received
+ * @apiBody {number} rating_5 The number of 5-star ratings the book has received
+ * @apiBody {string} image_url The URL of the book's image
+ * @apiBody {string} small_image_url The URL of the book's small image
+ *
+ * @apiSuccess {string} message "Book added"
+ *
+ * @apiError (400: isbn13 exists) {String} message "isbn13 already exists"
+ * @apiError (400: id exists) {String} message "id already exists"
+ * @apiError (400: Missing Parameters) {String} message "Missing required information - please refer to documentation"
+ */
 booksRouter.post('/new/', (request: Request, response: Response) => {
     const theQuery =
         'INSERT INTO books(id, title, authors, publication_year, isbn13, original_title) VALUES ($1, $2, $3, $4, $5, $2) RETURNING *';
@@ -163,8 +235,24 @@ booksRouter.post('/new/', (request: Request, response: Response) => {
         });
 });
 
-booksRouter.delete('/del/:id', (request: Request, response: Response) => {
-    const theQuery = 'DELETE FROM books WHERE id = $1 RETURNING *';
+/**
+ * @api {delete} /book/del/:isbn13 Delete a book from the database using the ISBN.
+ *
+ * @apiDescription Request to delete a book from the database with the ISBN.
+ *
+ * @apiName DeleteBookISBN
+ * @apiGroup Book
+ *
+ * @apiParam {String} isbn13 The ISBN13 of the book.
+ *
+ * @apiSuccess {string} message "{<code>id</code>} - [<code>isbn13</code>] : [<code>title</code>] deleted"
+ *
+ * @apiError (404: id Not Found) {String} message "isbn13 not found"
+ * @apiError (400: Missing Parameters) {String} message "Missing required information"
+ *
+ */
+booksRouter.delete('/del/:isbn', (request: Request, response: Response) => {
+    const theQuery = 'DELETE FROM books WHERE isbn13 = $1 RETURNING *';
     const values = [request.params.id];
 
     pool.query(theQuery, values)
@@ -190,14 +278,14 @@ booksRouter.delete('/del/:id', (request: Request, response: Response) => {
 });
 
 /**
- * @api {get} /:isbn13 Request to retrieve book of stated isbn13.
+ * @api {get} /book/:isbn13 Request to get a book of a specific ISBN.
  *
- * @apiDescription Request to retrieve book based on stated isbn13.
+ * @apiDescription Request to retrieve a book of a specific ISBN.
  *
- * @apiName IsbnBook
+ * @apiName GetByISBN
  * @apiGroup Book
  *
- * @apiParam {number} name the isbn13 to look up the book.
+ * @apiParam {String} isbn13 The ISBN13 of the book.
  *
  * @apierror (404: Book Not Found) {string} message "Book not found"
  * @apierror {500: Server Error} {string} message "Server error - more than 1 ISBN found"
