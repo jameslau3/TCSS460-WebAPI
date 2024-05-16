@@ -6,9 +6,12 @@ import { pool, validationFunctions } from '../../core/utilities';
 const booksRouter: Router = express.Router();
 
 /**
- * @api {get} /books Request to all retrieve entry books.
+ * @api {get} /books/all Request to all retrieve entry books.
  *
  * @apiDescription Request to retrieve all the entry books with pagination.
+ *
+ * @apiQuery {int} the page we're on
+ * @apiQuery {int} how many book data entry we want to show up in the page
  *
  * @apiName GetAllBooks
  * @apiGroup Book
@@ -57,13 +60,16 @@ booksRouter.get('/all', async (request: Request, response: Response) => {
  * @apiName GetByTitle
  * @apiGroup Book
  *
+ * @apiQuery {int} the page we're on
+ * @apiQuery {int} how many book data entry we want to show up in the page
+ *
  * @apiParam {String} title the title of the book
  *
  * @apiSuccess {string} title the title of the book
  * @apiSuccess {string} authors the authors of the book
  * @apiSuccess {int} publication_year the year the book was published
  *
- * @apiError (404: Title Not Found) {string} message "Book title not found"
+ * @apiError (404: Title Not Found) {string} message "No books found with that title
  *
  */
 booksRouter.get('/title/:title', (request: Request, response: Response) => {
@@ -105,9 +111,12 @@ booksRouter.get('/title/:title', (request: Request, response: Response) => {
 });
 
 /**
- * @api {get} /books/SortAZ Request to get all books sorting by Alphabetical order.
+ * @api {get} /books/SortAZ/ Request to get all books sorting by Alphabetical order.
  *
  * @apiDescription Request to retrieve all books sorted in Alphabetical order.
+ *
+ * @apiQuery {int} the page we're on
+ * @apiQuery {int} how many book data entry we want to show up in the page
  *
  * @apiName SortByTitleAZ
  * @apiGroup Book
@@ -155,7 +164,7 @@ booksRouter.get('/SortAZ/', (request: Request, response: Response) => {
 });
 
 /**
- * @api {post} /book/new/ Create a new book info entry.
+ * @api {post} /books/new/ Create a new book info entry.
  *
  * @apiDescription Request to create a new book with all necessary information.
  *
@@ -166,21 +175,16 @@ booksRouter.get('/SortAZ/', (request: Request, response: Response) => {
  * @apiBody {string} isbn13 The ISBN13 of the book
  * @apiBody {string} authors The authors of the book
  * @apiBody {number} publication_year The year the book was published
- * @apiBody {string} original_title The original title of the book
  * @apiBody {string} title The title of the book
- * @apiBody {number} rating_avg The average rating of the book
- * @apiBody {number} rating_count The total number of ratings the book has received
- * @apiBody {number} rating_1 The number of 1-star ratings the book has received
- * @apiBody {number} rating_2 The number of 2-star ratings the book has received
- * @apiBody {number} rating_3 The number of 3-star ratings the book has received
- * @apiBody {number} rating_4 The number of 4-star ratings the book has received
- * @apiBody {number} rating_5 The number of 5-star ratings the book has received
- * @apiBody {string} image_url The URL of the book's image
- * @apiBody {string} small_image_url The URL of the book's small image
  *
  * @apiSuccess {string} message "Book added"
+ * @apiSuccess {string} title the title of the book
+ * @apiSuccess {string} authors the authors of the book
+ * @apiSuccess {int} publication_year the year the book was published
+ * @apiSuccess {int} id of the book
+ * @apiSuccess {int} isbn13 of the book
  *
- * @apiError (400: isbn13 exists) {String} message "isbn13 already exists"
+ * @apiError (400: isbn13 exists) {String} message "name exists"
  * @apiError (400: id exists) {String} message "id already exists"
  * @apiError (400: Missing Parameters) {String} message "Missing required information - please refer to documentation"
  */
@@ -224,7 +228,7 @@ booksRouter.post('/new/', (request: Request, response: Response) => {
 });
 
 /**
- * @api {delete} /book/del/:isbn13 Delete a book from the database using the ISBN.
+ * @api {delete} /books/del/:isbn13 Delete a book from the database using the ISBN.
  *
  * @apiDescription Request to delete a book from the database with the ISBN.
  *
@@ -233,13 +237,13 @@ booksRouter.post('/new/', (request: Request, response: Response) => {
  *
  * @apiParam {String} isbn13 The ISBN13 of the book.
  *
- * @apiSuccess {string} message "{<code>id</code>} - [<code>isbn13</code>] : [<code>title</code>] deleted"
+ * @apiSuccess {string} message "Deleted: {<code>Deleted Book</code>}"
  *
- * @apiError (404: id Not Found) {String} message "isbn13 not found"
+ * @apiError (404: isbn13 Not Found) {String} message "isbn13 not found"
  * @apiError (400: Missing Parameters) {String} message "Missing required information"
  *
  */
-booksRouter.delete('/del/:isbn', (request: Request, response: Response) => {
+booksRouter.delete('/del/:isbn13', (request: Request, response: Response) => {
     const theQuery = 'DELETE FROM books WHERE isbn13 = $1 RETURNING *';
     const values = [request.params.isbn13];
 
@@ -251,7 +255,7 @@ booksRouter.delete('/del/:isbn', (request: Request, response: Response) => {
                 });
             } else {
                 response.status(404).send({
-                    message: 'Name not found',
+                    message: 'isbn13 not found',
                 });
             }
         })
@@ -266,22 +270,22 @@ booksRouter.delete('/del/:isbn', (request: Request, response: Response) => {
 });
 
 /**
- * @api {delete} /book/delete/:series Delete a book from the database using a series name/range.
+ * @api {delete} /books/delete/series Delete a book from the database using a series name/range.
  *
  * @apiDescription Request to delete a book from the database with the series name/range.
  *
  * @apiName DeleteBookSeries
  * @apiGroup Book
- * 
- * @apiParam {String} series The series title of the book.
  *
- * @apiSuccess {string} message "{<code>id</code>} : [<code>title</code>] deleted"
+ * @apiQuery {String} series The series title of the book.
  *
- * @apiError (404: id Not Found) {String} message "id not found"
+ * @apiSuccess {string} message "Deleted book series: {<code>Deleted Books</code>}"
+ *
+ * @apiError (404: Book Not Found) {String} message "Series or book not found"
  * @apiError (400: Missing Parameters) {String} message "Missing required information"
  *
  */
-booksRouter.delete('/delete/:series', (request: Request, response: Response) => {
+booksRouter.delete('/delete/series', (request: Request, response: Response) => {
     const seriesName = request.query.series;
 
     if (!seriesName) {
@@ -316,7 +320,7 @@ booksRouter.delete('/delete/:series', (request: Request, response: Response) => 
 });
 
 /**
- * @api {get} /book/:isbn13 Request to get a book of a specific ISBN.
+ * @api {get} /books/:isbn13 Request to get a book of a specific ISBN.
  *
  * @apiDescription Request to retrieve a book of a specific ISBN.
  *
@@ -362,14 +366,14 @@ booksRouter.get('/:isbn13', (request: Request, response: Response) => {
 });
 
 /**
- * @api {put} /rating/:isbn13 Request to change and add a rating to a book.
+ * @api {put} /books/rating/:isbn13 Request to change and add a rating to a book.
  *
  * @apiDescription Request to add a rating to a book and update the rating of that book.
  *
  * @apiName AddBookRating
  * @apiGroup Book
  *
- * @apiBody {number} priority a rating priority [1-5]
+ * @apiBody {number} priority a rating star priority [1-5]
  *
  * @apiparam {number} isbn13 the isbn13 for the book we want to rate
  *
@@ -476,14 +480,14 @@ booksRouter.put(
 );
 
 /**
- * @api {get} /book/all/:author Request to get books by a relative author name.
+ * @api {get} /books/all/by-author Request to get books by a relative author name.
  *
  * @apiDescription Request to retrieve all books with relative author name.
  *
  * @apiName GetByAuthor
  * @apiGroup Book
  *
- * @apiParam {String} author the author of the book
+ * @apiQuery {String} author the author of the book
  *
  * @apiSuccess {string} title the title of the book
  * @apiSuccess {int} publication_year the year the book was published
@@ -502,7 +506,8 @@ booksRouter.get('/all/by-author', (request: Request, response: Response) => {
     }
 
     const queryParams = [`%${authorName}%`];
-    const theQuery = 'SELECT title, authors, publication_year FROM books WHERE authors LIKE $1';
+    const theQuery =
+        'SELECT title, authors, publication_year FROM books WHERE authors LIKE $1';
 
     pool.query(theQuery, queryParams)
         .then((result) => {
@@ -521,18 +526,16 @@ booksRouter.get('/all/by-author', (request: Request, response: Response) => {
 });
 
 /**
- * @api {get} /book/all/:rating Request to get books by a relative rating.
+ * @api {get} /books/all/by-rating Request to get books by a relative rating.
  *
  * @apiDescription Request to retrieve all books with relative rating.
  *
  * @apiName GetByRating
  * @apiGroup Book
  *
- * @apiParam {number} rating the rating of the book
+ * @apiQuery {number} rating the rating of the book [1 - 5]
  *
  * @apiSuccess {string} title the title of the book
- * @apiSuccess {int} publication_year the year the book was published
- * @apiSuccess {string} authors the authors of the book
  *
  * @apiError (404: Rating Not Found) {string} message "Rating not found"
  *
