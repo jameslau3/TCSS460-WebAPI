@@ -251,9 +251,9 @@ booksRouter.post('/new/', (request: Request, response: Response) => {
  * @apiError (400: Missing Parameters) {String} message "Missing required information"
  *
  */
-booksRouter.delete('/del/:isbn', (request: Request, response: Response) => {
+booksRouter.delete('/del/:isbn13', (request: Request, response: Response) => {
     const theQuery = 'DELETE FROM books WHERE isbn13 = $1 RETURNING *';
-    const values = [request.params.id];
+    const values = [request.params.isbn13];
 
     pool.query(theQuery, values)
         .then((result) => {
@@ -490,6 +490,40 @@ booksRouter.get('/all/by-rating', (request: Request, response: Response) => {
         .catch((error) => {
             //log the error
             console.error('DB Query error on GET by rating');
+            console.error(error);
+            response.status(500).send({
+                message: 'server error - contact support',
+            });
+        });
+});
+
+booksRouter.delete('/delete/series', (request: Request, response: Response) => {
+    const seriesName = request.query.series;
+
+    if (!seriesName) {
+        response.status(400).send({
+            message: 'Series name is required',
+        });
+        return;
+    }
+
+    const queryParams = [`%${seriesName}%`];
+    const theQuery = 'DELETE FROM books WHERE title ILIKE $1 RETURNING *';
+    pool.query(theQuery, queryParams)
+        .then((result) => {
+            if (result.rowCount == 0) {
+                response.status(404).send({
+                    message: 'Series or book not found',
+                });
+            } else {
+                response.send({
+                    entries: 'Deleted book series: ' + result.rows,
+                });
+            }
+        })
+        .catch((error) => {
+            //log the error
+            console.error('DB Query error on DELETE SERIES');
             console.error(error);
             response.status(500).send({
                 message: 'server error - contact support',
