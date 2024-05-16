@@ -10,8 +10,8 @@ const booksRouter: Router = express.Router();
  *
  * @apiDescription Request to retrieve all the entry books with pagination.
  *
- * @apiQuery {int} the page we're on
- * @apiQuery {int} how many book data entry we want to show up in the page
+ * @apiQuery {int} page page we're on
+ * @apiQuery {int} limit many book data entry we want to show up in the page
  *
  * @apiName GetAllBooks
  * @apiGroup Book
@@ -60,8 +60,8 @@ booksRouter.get('/all', async (request: Request, response: Response) => {
  * @apiName GetByTitle
  * @apiGroup Book
  *
- * @apiQuery {int} the page we're on
- * @apiQuery {int} how many book data entry we want to show up in the page
+ * @apiQuery {int} page page we're on
+ * @apiQuery {int} limit many book data entry we want to show up in the page
  *
  * @apiParam {String} title the title of the book
  *
@@ -115,8 +115,8 @@ booksRouter.get('/title/:title', (request: Request, response: Response) => {
  *
  * @apiDescription Request to retrieve all books sorted in Alphabetical order.
  *
- * @apiQuery {int} the page we're on
- * @apiQuery {int} how many book data entry we want to show up in the page
+ * @apiQuery {int} page page we're on
+ * @apiQuery {int} limit how many book data entry we want to show up in the page
  *
  * @apiName SortByTitleAZ
  * @apiGroup Book
@@ -373,19 +373,15 @@ booksRouter.get('/:isbn13', (request: Request, response: Response) => {
  * @apiName AddBookRating
  * @apiGroup Book
  *
- * @apiBody {number} priority a rating star priority [1-5]
- *
+ * @apiBody {number} rating_priority a rating star priority [1-5]
  * @apiparam {number} isbn13 the isbn13 for the book we want to rate
  *
- * @apiSuccess {String} entry the string
- *      "Updated: {<code>priority</code>} - [<code>name</code>] says: <code>message</code>"
- *
- * @apiError (400: Wrong body) {String} message "starInserted must be a number from 1-5"
- * @apiError (500: Missing Parameters) {String} message "Server error - more than 1 ISBN found"
- * @apiError (404: Book not found) {String} message "Book not found"
+ * @apiError (400: Wrong body) {String} star "starInserted must be a number from 1-5"
+ * @apiError (500: Missing Parameters) {String} error "Server error - more than 1 ISBN found"
+ * @apiError (404: Book not found) {String} book_not_found "Book not found"
  *
  * @apiSuccess {String} entries the book into a string
- *        "title:" {}
+ *        ""book :" {<code>Returns all information about the book and its updated ratings.</code>}"
  */
 booksRouter.put(
     '/rating/:isbn13',
