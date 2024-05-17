@@ -492,34 +492,31 @@ booksRouter.put(
  * @apiError (404: Name Not Found) {string} message "Author name not found"
  *
  */
-booksRouter.get('/all/by-author', (request: Request, response: Response) => {
-    const authorName = request.query.author;
-    if (!authorName) {
-        response.status(400).send({
-            message: 'Author name is required',
-        });
-        return;
-    }
+booksRouter.get(
+    '/all/:author',
+    async (request: Request, response: Response) => {
+        const theQuery =
+            'SELECT title, authors, publication_year FROM books WHERE authors ILIKE $1';
+        const values = ['%' + request.params.author + '%'];
 
-    const queryParams = [`%${authorName}%`];
-    const theQuery =
-        'SELECT title, authors, publication_year FROM books WHERE authors LIKE $1';
-
-    pool.query(theQuery, queryParams)
-        .then((result) => {
-            response.send({
-                entries: result.rows,
-            });
-        })
-        .catch((error) => {
-            //log the error
-            console.error('DB Query error on GET by author');
+        try {
+            const result = await pool.query(theQuery, values);
+            if (result.rowCount > 0) {
+                response.status(200).send(result.rows);
+            } else {
+                response.status(404).send({
+                    message: 'No books found by that author',
+                });
+            }
+        } catch (error) {
+            console.error('DB Query error on GET author/:author');
             console.error(error);
             response.status(500).send({
-                message: 'server error - contact support',
+                message: 'Server error - contact support',
             });
-        });
-});
+        }
+    }
+);
 
 /**
  * @api {get} /books/all/by-rating Request to get books by a relative rating.
@@ -536,37 +533,32 @@ booksRouter.get('/all/by-author', (request: Request, response: Response) => {
  * @apiError (404: Rating Not Found) {string} message "Rating not found"
  *
  */
-booksRouter.get('/all/by-rating', (request: Request, response: Response) => {
-    const ratingString = request.query.rating as string;
+booksRouter.get(
+    '/rating/:rating',
+    async (request: Request, response: Response) => {
+        const rating = parseFloat(request.params.rating);
+        const theQuery =
+            'SELECT title, authors, publication_year, rating_avg FROM books WHERE rating_avg = $1';
+        const values = [rating];
 
-    // Parse the rating string to a float
-    const rating = parseFloat(ratingString);
-
-    if (isNaN(rating) || rating < 1 || rating > 5) {
-        response.status(400).send({
-            message: 'Rating must be a number between 1 and 5',
-        });
-        return;
-    }
-
-    const queryParams = [rating];
-    const theQuery = 'SELECT title FROM books WHERE rating_avg = $1';
-
-    pool.query(theQuery, queryParams)
-        .then((result) => {
-            response.send({
-                entries: result.rows,
-            });
-        })
-        .catch((error) => {
-            //log the error
-            console.error('DB Query error on GET by rating');
+        try {
+            const result = await pool.query(theQuery, values);
+            if (result.rowCount > 0) {
+                response.status(200).send(result.rows);
+            } else {
+                response.status(404).send({
+                    message: 'No books found with the specified rating',
+                });
+            }
+        } catch (error) {
+            console.error('DB Query error on GET /all/:rating');
             console.error(error);
             response.status(500).send({
-                message: 'server error - contact support',
+                message: 'Server error - contact support',
             });
-        });
-});
+        }
+    }
+);
 
 // "return" the router
 export { booksRouter };
