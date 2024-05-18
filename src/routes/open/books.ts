@@ -282,7 +282,7 @@ booksRouter.delete('/del/:isbn13', (request: Request, response: Response) => {
  * @apiSuccess {string} message "Deleted book series: {<code>Deleted Books</code>}"
  *
  * @apiError (404: Book Not Found) {String} message "Series or book not found"
- * @apiError (400: Missing Parameters) {String} message "Missing required information"
+ * @apiError (400: Missing Query Values) {String} message "Series name is required"
  *
  */
 booksRouter.delete('/delete/series', (request: Request, response: Response) => {
@@ -476,28 +476,28 @@ booksRouter.put(
 );
 
 /**
- * @api {get} /books/all/by-author Request to get books by a relative author name.
+ * @api {get} /books/all/:authors Request to get books by a relative author name.
  *
  * @apiDescription Request to retrieve all books with relative author name.
  *
  * @apiName GetByAuthor
  * @apiGroup Book
  *
- * @apiQuery {String} author the author of the book
+ * @apiParam {String} authors the author of the book
  *
  * @apiSuccess {string} title the title of the book
  * @apiSuccess {int} publication_year the year the book was published
  * @apiSuccess {string} authors the authors of the book
  *
- * @apiError (404: Name Not Found) {string} message "Author name not found"
+ * @apiError (404: Name Not Found) {string} message "No books found by that author
  *
  */
 booksRouter.get(
-    '/all/:author',
+    '/all/:authors',
     async (request: Request, response: Response) => {
         const theQuery =
             'SELECT title, authors, publication_year FROM books WHERE authors ILIKE $1';
-        const values = ['%' + request.params.author + '%'];
+        const values = ['%' + request.params.authors + '%'];
 
         try {
             const result = await pool.query(theQuery, values);
@@ -509,7 +509,7 @@ booksRouter.get(
                 });
             }
         } catch (error) {
-            console.error('DB Query error on GET author/:author');
+            console.error('DB Query error on GET author/:authors');
             console.error(error);
             response.status(500).send({
                 message: 'Server error - contact support',
@@ -519,18 +519,18 @@ booksRouter.get(
 );
 
 /**
- * @api {get} /books/all/by-rating Request to get books by a relative rating.
+ * @api {get} /books/rating/:rating Request to get books by a relative rating.
  *
  * @apiDescription Request to retrieve all books with relative rating.
  *
  * @apiName GetByRating
  * @apiGroup Book
  *
- * @apiQuery {number} rating the rating of the book [1 - 5]
+ * @apiParam {number} rating the rating of the book [1 - 5]
  *
  * @apiSuccess {string} title the title of the book
  *
- * @apiError (404: Rating Not Found) {string} message "Rating not found"
+ * @apiError (404: Rating Not Found) {string} message "No books found with the specified rating
  *
  */
 booksRouter.get(
@@ -559,6 +559,284 @@ booksRouter.get(
         }
     }
 );
+
+/**
+ * @api {get} /books/year/:date Request to get books by release year.
+ *
+ * @apiQuery {int} page page we're on
+ * @apiQuery {int} limit how many book data entry we want to show up in the page
+ *
+ * @apiDescription Request to retrieve all books with release year.
+ *
+ * @apiName GetByReleaseDate
+ * @apiGroup Book
+ *
+ * @apiParam {String} date the release date year of the book
+ *
+ * @apiSuccess {string} title the title of the book
+ * @apiSuccess {string} authors the authors of the book
+ * @apiSuccess {int} publication_year the year the book was published
+ *
+ * @apiError (404: Book Not Found) {string} message "No books found with that publication year"
+ *
+ */
+booksRouter.get('/year/:date', (request: Request, response: Response) => {
+    const page = parseInt(request.query.page as string, 10) || 1;
+    const limit = parseInt(request.query.limit as string, 10) || 10;
+    const offset = (page - 1) * limit;
+    const theQuery =
+        'SELECT title, authors, publication_year FROM books WHERE publication_year = $1 LIMIT $2 OFFSET $3';
+    const countQuery = 'SELECT COUNT(*) FROM books';
+    const values = [request.params.date, limit, offset];
+    pool.query(theQuery, values)
+        .then(async (result) => {
+            const countBooks = await pool.query(countQuery);
+            const totalBooks = parseInt(countBooks.rows[0].count, 10);
+            const totalPage = Math.ceil(totalBooks / limit);
+            if (result.rowCount > 0) {
+                response.send({
+                    entries: result.rows,
+                    pagination: {
+                        page: page,
+                        limit: limit,
+                        totalPages: totalPage,
+                    },
+                });
+            } else {
+                response.status(404).send({
+                    message: `No books found with that publication year`,
+                });
+            }
+        })
+        .catch((error) => {
+            //log the error
+            console.error('DB Query error on GET year/~date');
+            console.error(error);
+            response.status(500).send({
+                message: 'server error - contact support',
+            });
+        });
+});
+
+/**
+ * @api {get} /books/year/:date/older Request to get books older than release year in descending order.
+ *
+ * @apiQuery {int} page page we're on
+ * @apiQuery {int} limit how many book data entry we want to show up in the page
+ *
+ * @apiDescription Request to retrieve all books older than the release year.
+ *
+ * @apiName GetByReleaseDateOlder
+ * @apiGroup Book
+ *
+ * @apiParam {String} date the date of the book
+ *
+ * @apiSuccess {string} title the title of the book
+ * @apiSuccess {string} authors the authors of the book
+ * @apiSuccess {int} publication_year the year the book was published
+ *
+ * @apiError (404: Book Not Found) {string} message "No books found older than publication year"
+ *
+ */
+booksRouter.get('/year/:date/older', (request: Request, response: Response) => {
+    const page = parseInt(request.query.page as string, 10) || 1;
+    const limit = parseInt(request.query.limit as string, 10) || 10;
+    const offset = (page - 1) * limit;
+    const theQuery =
+        'SELECT title, authors, publication_year FROM books WHERE publication_year < $1  ORDER BY publication_year desc LIMIT $2 OFFSET $3';
+    const countQuery = 'SELECT COUNT(*) FROM books';
+    const values = [request.params.date, limit, offset];
+    pool.query(theQuery, values)
+        .then(async (result) => {
+            const countBooks = await pool.query(countQuery);
+            const totalBooks = parseInt(countBooks.rows[0].count, 10);
+            const totalPage = Math.ceil(totalBooks / limit);
+            if (result.rowCount > 0) {
+                response.send({
+                    entries: result.rows,
+                    pagination: {
+                        page: page,
+                        limit: limit,
+                        totalPages: totalPage,
+                    },
+                });
+            } else {
+                response.status(404).send({
+                    message: `No books found older than publication year`,
+                });
+            }
+        })
+        .catch((error) => {
+            //log the error
+            console.error('DB Query error on GET year/~date/newer');
+            console.error(error);
+            response.status(500).send({
+                message: 'server error - contact support',
+            });
+        });
+});
+/**
+ * @api {get} /books/year/:date/newer Request to get books newer than release year in ascending order.
+ *
+ * @apiDescription Request to retrieve all books newer than the release year.
+ *
+ * @apiName GetByReleaseDateNewer
+ * @apiGroup Book
+ *
+ * @apiQuery {int} page page we're on
+ * @apiQuery {int} limit many book data entry we want to show up in the page
+ * @apiParam {String} date the year of the book
+ *
+ * @apiSuccess {string} title the title of the book
+ * @apiSuccess {string} authors the authors of the book
+ * @apiSuccess {int} publication_year the year the book was published
+ *
+ * @apiError (404: Book Not Found) {string} message "No books found newer than publication year"
+ *
+ */
+booksRouter.get('/year/:date/newer', (request: Request, response: Response) => {
+    const page = parseInt(request.query.page as string, 10) || 1;
+    const limit = parseInt(request.query.limit as string, 10) || 10;
+    const offset = (page - 1) * limit;
+    const theQuery =
+        'SELECT title, authors, publication_year FROM books WHERE publication_year > $1 ORDER BY publication_year asc LIMIT $2 OFFSET $3';
+    const countQuery = 'SELECT COUNT(*) FROM books';
+    const values = [request.params.date, limit, offset];
+    pool.query(theQuery, values)
+        .then(async (result) => {
+            const countBooks = await pool.query(countQuery);
+            const totalBooks = parseInt(countBooks.rows[0].count, 10);
+            const totalPage = Math.ceil(totalBooks / limit);
+            if (result.rowCount > 0) {
+                response.send({
+                    entries: result.rows,
+                    pagination: {
+                        page: page,
+                        limit: limit,
+                        totalPages: totalPage,
+                    },
+                });
+            } else {
+                response.status(404).send({
+                    message: `No books found newer than publication year`,
+                });
+            }
+        })
+        .catch((error) => {
+            //log the error
+            console.error('DB Query error on GET year/~date/newer');
+            console.error(error);
+            response.status(500).send({
+                message: 'server error - contact support',
+            });
+        });
+});
+
+/**
+ * @api {get} /books/date/SortOldest/ Request to get all books sorting by publication date order, starting from the oldest.
+ *
+ * @apiQuery {int} page page we're on
+ * @apiQuery {int} limit many book data entry we want to show up in the page
+ *
+ * @apiDescription Request to retrieve all books sorted in publication date order from oldest to newest.
+ *
+ * @apiName SortByOldest
+ * @apiGroup Book
+ *
+ * @apiSuccess {string} title the title of the book
+ * @apiSuccess {int} publication_year the year the book was published
+ * @apiSuccess {string} authors the authors of the book
+ *
+ */
+booksRouter.get('/date/SortOldest/', (request: Request, response: Response) => {
+    const page = parseInt(request.query.page as string, 10) || 1;
+    const limit = parseInt(request.query.limit as string, 10) || 10;
+    const offset = (page - 1) * limit;
+
+    const theQuery = `SELECT title, authors, publication_year FROM books ORDER BY publication_year asc LIMIT $1 OFFSET $2`;
+    const countQuery = 'SELECT COUNT(*) FROM books';
+    pool.query(theQuery, [limit, offset])
+        .then(async (result) => {
+            const countBooks = await pool.query(countQuery);
+            const totalBooks = parseInt(countBooks.rows[0].count, 10);
+            const totalPage = Math.ceil(totalBooks / limit);
+            if (result.rowCount > 0) {
+                response.send({
+                    entries: result.rows,
+                    pagination: {
+                        page: page,
+                        limit: limit,
+                        totalPages: totalPage,
+                    },
+                });
+            } else {
+                response.status(404).send({
+                    message: `No books found in database`,
+                });
+            }
+        })
+        .catch((error) => {
+            //log the error
+            console.error('DB Query error on GET sortOldest');
+            console.error(error);
+            response.status(500).send({
+                message: 'server error - contact support',
+            });
+        });
+});
+
+/**
+ * @api {get} /books/date/SortNewest/ Request to get all books sorting by publication date order, starting from the newest.
+ *
+ * @apiQuery {int} page page we're on
+ * @apiQuery {int} limit many book data entry we want to show up in the page
+ *
+ * @apiDescription Request to retrieve all books sorted in publication date order from newest to oldest.
+ *
+ * @apiName SortByNewest
+ * @apiGroup Book
+ *
+ * @apiSuccess {string} title the title of the book
+ * @apiSuccess {int} publication_year the year the book was published
+ * @apiSuccess {string} authors the authors of the book
+ *
+ */
+booksRouter.get('/date/SortNewest/', (request: Request, response: Response) => {
+    const page = parseInt(request.query.page as string, 10) || 1;
+    const limit = parseInt(request.query.limit as string, 10) || 10;
+    const offset = (page - 1) * limit;
+
+    const theQuery = `SELECT title, authors, publication_year FROM books ORDER BY publication_year desc LIMIT $1 OFFSET $2`;
+    const countQuery = 'SELECT COUNT(*) FROM books';
+    pool.query(theQuery, [limit, offset])
+        .then(async (result) => {
+            const countBooks = await pool.query(countQuery);
+            const totalBooks = parseInt(countBooks.rows[0].count, 10);
+            const totalPage = Math.ceil(totalBooks / limit);
+            if (result.rowCount > 0) {
+                response.send({
+                    entries: result.rows,
+                    pagination: {
+                        page: page,
+                        limit: limit,
+                        totalPages: totalPage,
+                    },
+                });
+            } else {
+                response.status(404).send({
+                    message: `No books found in database`,
+                });
+            }
+        })
+        .catch((error) => {
+            //log the error
+            console.error('DB Query error on GET sortNewest');
+            console.error(error);
+            response.status(500).send({
+                message: 'server error - contact support',
+            });
+        });
+});
 
 // "return" the router
 export { booksRouter };
