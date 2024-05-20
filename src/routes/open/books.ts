@@ -21,7 +21,7 @@ const booksRouter: Router = express.Router();
  */
 booksRouter.get('/all', async (request: Request, response: Response) => {
     const page = parseInt(request.query.page as string, 10) || 1; //default is page 1.
-    const limit = parseInt(request.query.limit as string, 10);
+    const limit = parseInt(request.query.limit as string, 10) || 10;
 
     // const firstIndex = (page - 1) * limit;
     // const lastIndex = page * limit;
